@@ -1,0 +1,182 @@
+const holidays = [
+    {
+      hdate: "01-01-2024",
+      holiday: "New Year Day",
+    },
+    {
+      hdate: "15-02-2024",
+      holiday: "Saudi Founding Day",
+    },
+    {
+      hdate: "10-03-2024",
+      holiday: "The first nights of Ramadan",
+    },
+    {
+      hdate: "10-04-2024",
+      holiday: "Eid al-Fitr",
+    },
+    {
+      hdate: "14-06-2024",
+      holiday: "The beginning of the Hajj season",
+    },
+    {
+      hdate: "17-06-2024",
+      holiday: "Eid al-Adha",
+    },
+    {
+      hdate: "17-07-2024",
+      holiday: "Ashura",
+    },
+    {
+      hdate: "20-08-2023",
+      holiday: "beginning of the study",
+    },
+    {
+      hdate: "23-09-2023",
+      holiday: "Saudi National Day",
+    },
+  ];
+  
+const calendar = document.querySelector("#Calendar");
+const monthBanner = document.querySelector("#Month");
+let navigation = 0;
+let clicked = null;
+let events = localStorage.getItem("events") ? JSON.parse(localStorage.getItem("events")) : [];
+const Weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function loadCalendar() {
+  const dt = new Date();
+
+  if (navigation != 0) {
+    dt.setMonth(new Date().getMonth() + navigation);
+  }
+  const day = dt.getDate();
+  const month = dt.getMonth();
+  const year = dt.getFullYear();
+  monthBanner.innerText = `${dt.toLocaleDateString("en-us", {
+    month: "long",
+  })} ${year}`;
+  calendar.innerHTML = "";
+  const dayInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDayofMonth = new Date(year, month, 1);
+  const dateText = firstDayofMonth.toLocaleDateString("en-us", {
+    weekday: "long",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  });
+
+  const dayString = dateText.split(", ")[0];
+  const emptyDays = Weekdays.indexOf(dayString);
+
+  for (let i = 1; i <= dayInMonth + emptyDays; i++) {
+    const dayBox = document.createElement("div");
+    dayBox.classList.add("day");
+    const monthVal = month + 1 < 10 ? "0" + (month + 1) : month + 1;
+    const dateVal = i - emptyDays < 10 ? "0" + (i - emptyDays) : i - emptyDays;
+    const dateText = `${dateVal}-${monthVal}-${year}`;
+    if (i > emptyDays) {
+      dayBox.innerText = i - emptyDays;
+      
+      const eventOfTheDay = events.find((e) => e.date == dateText);
+     
+      const holidayOfTheDay = holidays.find((e) => e.hdate == dateText);
+
+      if (i - emptyDays === day && navigation == 0) {
+        dayBox.id = "currentDay";
+      }
+
+      if (eventOfTheDay) {
+        const eventDiv = document.createElement("div");
+        eventDiv.classList.add("event");
+        eventDiv.innerText = eventOfTheDay.title;
+        dayBox.appendChild(eventDiv);
+      }
+      if (holidayOfTheDay) {
+        const eventDiv = document.createElement("div");
+        eventDiv.classList.add("event");
+        eventDiv.classList.add("holiday");
+        eventDiv.innerText = holidayOfTheDay.holiday;
+        dayBox.appendChild(eventDiv);
+      }
+
+      dayBox.addEventListener("click", () => {
+        showModal(dateText);
+      });
+    } else {
+      dayBox.classList.add("plain");
+    }
+    calendar.append(dayBox);
+  }
+}
+function buttons() {
+  const btnleft = document.querySelector("#btnleft");
+  const btnright = document.querySelector("#btnright");
+  const btnDelete = document.querySelector("#btnDelete");
+  const btnAdd = document.querySelector("#btnAdd");
+  const closeButtons = document.querySelectorAll(".btnClose");
+  const txtTitle = document.querySelector("#txtTitle");
+
+  btnleft.addEventListener("click", () => {
+    navigation--;
+    loadCalendar();
+  });
+  btnright.addEventListener("click", () => {
+    navigation++;
+    loadCalendar();
+  });
+  Event.addEventListener("click", closeEvent);
+  closeButtons.forEach((btn) => {
+    btn.addEventListener("click", closeEvent);
+  });
+  btnDelete.addEventListener("click", function () {
+    events = events.filter((e) => e.date !== clicked);
+    localStorage.setItem("events", JSON.stringify(events));
+    closeEvent();
+  });
+
+  btnAdd.addEventListener("click", function () {
+    if (txtTitle.value) {
+      txtTitle.classList.remove("error");
+      events.push({
+        date: clicked,
+        title: txtTitle.value.trim(),
+      });
+      txtTitle.value = "";
+      localStorage.setItem("events", JSON.stringify(events));
+      closeModal();
+    } else {
+      txtTitle.classList.add("error");
+    }
+  });
+}
+
+const Event = document.querySelector("#Event");
+const viewEventForm = document.querySelector("#viewEvent");
+const addTaskForm = document.querySelector("#addTask");
+
+function showModal(dateText) {
+  clicked = dateText;
+  const eventOfTheDay = events.find((e) => e.date == dateText);
+  if (eventOfTheDay) {
+   
+    document.querySelector("#eventTask").innerText = eventOfTheDay.title;
+    viewEventForm.style.display = "block";
+  } else {
+   
+    addTaskForm.style.display = "block";
+  }
+  Event.style.display = "block";
+}
+
+
+function closeEvent() {
+  viewEventForm.style.display = "none";
+  addTaskForm.style.display = "none";
+  Event.style.display = "none";
+  clicked = null;
+  loadCalendar();
+}
+
+buttons();
+loadCalendar();
